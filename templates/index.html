@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Strength Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .main-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .password-input {
+            border-radius: 10px;
+            padding: 1rem;
+            font-size: 1.1rem;
+            border: 2px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+        .password-input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+        }
+        .result-card {
+            border-radius: 10px;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+        .result-card.hidden {
+            display: none;
+        }
+        .score-badge {
+            font-size: 1.2rem;
+            padding: 0.5rem 1rem;
+        }
+        .pattern-item {
+            background: #f8f9fa;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            margin: 0.25rem 0;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        .loading i {
+            font-size: 2rem;
+            color: #0d6efd;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .copy-btn {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .copy-btn:hover {
+            color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container main-container">
+        <h1 class="text-center mb-4">
+            <i class="fas fa-shield-alt text-primary"></i>
+            Password Strength Analyzer
+        </h1>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="input-group mb-3">
+                    <input type="text" id="passwordInput" class="form-control password-input" 
+                           placeholder="Enter a password to analyze...">
+                    <button class="btn btn-primary" onclick="analyzePassword()">
+                        <i class="fas fa-search"></i> Analyze
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading">
+            <i class="fas fa-spinner"></i>
+            <p class="mt-2">Analyzing password...</p>
+        </div>
+
+        <div class="result-card hidden">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Analysis Results</h5>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Original Password</h6>
+                            <p id="originalPassword" class="mb-0"></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Suggested Password</h6>
+                            <p id="suggestedPassword" class="mb-0">
+                                <span id="newPassword"></span>
+                                <i class="fas fa-copy copy-btn ms-2" onclick="copyPassword()"></i>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Password Strength Score</h6>
+                            <span id="zxcvbnScore" class="badge bg-primary score-badge"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Time to Crack</h6>
+                            <p id="timeToCrack" class="mb-0"></p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h6>Entropy</h6>
+                        <p id="entropy" class="mb-0"></p>
+                    </div>
+
+                    <div class="mt-4">
+                        <h6>Patterns Found</h6>
+                        <div id="patterns"></div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h6>Dictionary Words Found</h6>
+                        <div id="dictionaryWords"></div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h6>Password Database Checks</h6>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <h6 class="mb-2">
+                                        <i class="fas fa-database"></i> RockYou Database
+                                        <a href="#" class="text-info ms-2" data-bs-toggle="tooltip" 
+                                           title="The RockYou database contains millions of passwords leaked in the 2009 RockYou data breach. It's commonly used to test password security.">
+                                            <i class="fas fa-info-circle"></i>
+                                        </a>
+                                    </h6>
+                                    <div id="rockyouStatus"></div>
+                                </div>
+                                
+                                <div>
+                                    <h6 class="mb-2">
+                                        <i class="fas fa-shield-alt"></i> Have I Been Pwned
+                                        <a href="https://haveibeenpwned.com/About" target="_blank" class="text-info ms-2" 
+                                           data-bs-toggle="tooltip" 
+                                           title="Have I Been Pwned is a database of billions of passwords exposed in data breaches. Click to learn more.">
+                                            <i class="fas fa-info-circle"></i>
+                                        </a>
+                                    </h6>
+                                    <div id="hibpStatus"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function analyzePassword() {
+            const password = document.getElementById('passwordInput').value;
+            if (!password) {
+                alert('Please enter a password');
+                return;
+            }
+
+            // Show loading
+            document.querySelector('.loading').style.display = 'block';
+            document.querySelector('.result-card').classList.add('hidden');
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ password }),
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    alert(data.error || 'An error occurred');
+                }
+            } catch (error) {
+                alert('An error occurred while analyzing the password');
+            } finally {
+                document.querySelector('.loading').style.display = 'none';
+            }
+        }
+
+        function displayResults(data) {
+            // Display original and suggested passwords
+            document.getElementById('originalPassword').textContent = data.original_password;
+            document.getElementById('newPassword').textContent = data.suggested_password;
+
+            // Display score
+            const scoreBadge = document.getElementById('zxcvbnScore');
+            scoreBadge.textContent = `${data.zxcvbn_score}/4`;
+            scoreBadge.className = `badge score-badge ${
+                data.zxcvbn_score <= 1 ? 'bg-danger' :
+                data.zxcvbn_score === 2 ? 'bg-warning' :
+                data.zxcvbn_score === 3 ? 'bg-info' :
+                'bg-success'
+            }`;
+
+            // Display time to crack
+            document.getElementById('timeToCrack').textContent = data.time_to_crack;
+
+            // Display entropy
+            document.getElementById('entropy').textContent = `${data.entropy.toFixed(2)} bits`;
+
+            // Display patterns
+            const patternsDiv = document.getElementById('patterns');
+            patternsDiv.innerHTML = data.patterns_found.length ? 
+                data.patterns_found.map(pattern => 
+                    `<div class="pattern-item">${pattern}</div>`
+                ).join('') : 
+                '<p class="text-muted">No patterns found</p>';
+
+            // Display dictionary words
+            const wordsDiv = document.getElementById('dictionaryWords');
+            wordsDiv.innerHTML = data.dictionary_words.length ? 
+                data.dictionary_words.map(word => 
+                    `<div class="pattern-item">${word}</div>`
+                ).join('') : 
+                '<p class="text-muted">No dictionary words found</p>';
+
+            // Display RockYou database status
+            const rockyouDiv = document.getElementById('rockyouStatus');
+            if (data.in_rockyou) {
+                rockyouDiv.innerHTML = `
+                    <div class="alert alert-danger mb-0 py-2">
+                        <i class="fas fa-times-circle"></i> Found in RockYou database
+                    </div>`;
+            } else {
+                rockyouDiv.innerHTML = `
+                    <div class="alert alert-success mb-0 py-2">
+                        <i class="fas fa-check-circle"></i> Not found in RockYou database
+                    </div>`;
+            }
+
+            // Display HIBP status
+            const hibpDiv = document.getElementById('hibpStatus');
+            if (data.is_breached) {
+                hibpDiv.innerHTML = `
+                    <div class="alert alert-danger mb-0 py-2">
+                        <i class="fas fa-times-circle"></i> Found in HIBP database
+                    </div>`;
+            } else {
+                hibpDiv.innerHTML = `
+                    <div class="alert alert-success mb-0 py-2">
+                        <i class="fas fa-check-circle"></i> Not found in HIBP database
+                    </div>`;
+            }
+
+            // Show results
+            document.querySelector('.result-card').classList.remove('hidden');
+        }
+
+        function copyPassword() {
+            const newPassword = document.getElementById('newPassword').textContent;
+            navigator.clipboard.writeText(newPassword).then(() => {
+                const copyBtn = document.querySelector('.copy-btn');
+                copyBtn.className = 'fas fa-check copy-btn ms-2';
+                setTimeout(() => {
+                    copyBtn.className = 'fas fa-copy copy-btn ms-2';
+                }, 2000);
+            });
+        }
+
+        // Allow Enter key to trigger analysis
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzePassword();
+            }
+        });
+
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    </script>
+</body>
+</html> 
