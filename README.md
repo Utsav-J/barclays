@@ -14,7 +14,7 @@ This Python program analyzes the strength of passwords and suggests stronger alt
 - Modern web interface with real-time analysis
 
 ## Requirements
-
+- First [Download rockyou.txt](https://github.com/brannondorsey/naive-hashcat/releases/download/data/rockyou.txt)
 - Python 3.7+
 - Required packages listed in `requirements.txt`
 
